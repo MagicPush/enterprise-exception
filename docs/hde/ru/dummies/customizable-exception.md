@@ -133,6 +133,10 @@ echo $e->getMessage(); // >> 'осталось 2 попытки'
                 throw new UserException(UserException::FORBIDDEN_UNRELIABLE);
             }
         }
+    
+        // ...
+    
+    }
     ```
 
 1. Обрабатывайте исключения:
@@ -142,11 +146,13 @@ echo $e->getMessage(); // >> 'осталось 2 попытки'
         // ...
         
         $billing_service->checkWallet();
-    } catch (CustomizableException $e) {
-        $error_message = $e->getMessageFe(); // выводите только те сообщения, которые может видеть пользователь
-        // NOT_ENOUGH_MONEY >> 'Недостаточно средств (вам нужно внести $3.05)'
-        // FORBIDDEN_UNRELIABLE >> 'error 301'
-    } finally {
+    } catch (Throwable $e) {
+        if ($e instanceof CustomizableException) {
+            $this->showMessage($e->getMessageFe()); // выводите только те сообщения, которые может видеть пользователь
+            // NOT_ENOUGH_MONEY >> 'Недостаточно средств (вам нужно внести $3.05)'
+            // FORBIDDEN_UNRELIABLE >> 'error 301'
+        }
+    
         error_log($e->getMessage()); // or $e->__toString(); логируйте настоящие сообщения
         // NOT_ENOUGH_MONEY >> 'Недостаточно средств (вам нужно внести $3.05)'
         // FORBIDDEN_UNRELIABLE >> 'Операция недоступна для ненадёжных пользователей'
@@ -196,9 +202,11 @@ try {
     // ...
     
     $billing_service->checkWallet();
-} catch (CustomizableException $e) {
-    $error_message = $e->getMessageFe(); // >> 'Пожалуйста, сначала подтвердите ваш электронный адрес'
-} finally {
+} catch (Throwable $e) {
+    if ($e instanceof CustomizableException) {
+        $this->showMessage($e->getMessageFe()); // >> 'Пожалуйста, сначала подтвердите ваш электронный адрес'
+    }
+
     error_log($e->getMessage()); // or $e->__toString(); >> 'Операция недоступна для ненадёжных пользователей'
 }
 ```
@@ -216,18 +224,20 @@ try {
 
 ```php
 // активация "pro"-версии профила...
+try {
+    // ...
 } catch (CustomizableException $e) {
     $e->setContext('Обновление вашего профиля');
-    $error_message = $e->getMessageFe();
-    // >> 'Обновление вашего профиля: Недостаточно средств (вам нужно внести $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Обновление вашего профиля: Недостаточно средств (вам нужно внести $3.05)'
 }
 
 // покупка скина для профиля...
+try {
+    // ...
 } catch (CustomizableException $e) {
     // $skin_name = 'CoolLook';
     $e->setContext(srpintf('Покупка скина "%s"', $skin_name));
-    $error_message = $e->getMessageFe();
-    // >> 'Покупка скина "CoolLook": Недостаточно средств (вам нужно внести $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Покупка скина "CoolLook": Недостаточно средств (вам нужно внести $3.05)'
 }
 ```
 
@@ -253,11 +263,12 @@ class UserException extends CustomizableException
 }
 
 // покупая что-либо...
+try {
+    // ...
 } catch (CustomizableException $e) {
-    $error_message = $e->getMessageFe();
-    // >> 'Невозможно купить услугу: Недостаточно средств (вам нужно внести $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Невозможно купить услугу: Недостаточно средств (вам нужно внести $3.05)'
     $e->setContext('Обновление профиля');
-    $error_message = $e->getMessageFe(); // >> 'Обновление профиля: Недостаточно средств (вам нужно внести $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Обновление профиля: Недостаточно средств (вам нужно внести $3.05)'
 }
 ```
 
@@ -266,7 +277,7 @@ class UserException extends CustomizableException
 В репозитории есть демонстрационный скрипт с несколькими уже настроенными классами и свойствами их исключений для
 быстрого ознакомления с поддерживаемыми свойствами. Просто запустите его в командной строке:
 
-```php
+```
 php examples/customizable.php
 ```
 

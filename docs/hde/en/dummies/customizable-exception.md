@@ -127,6 +127,10 @@ users_" (**301**) and you don't want users to see it's real message.
                 throw new UserException(UserException::FORBIDDEN_UNRELIABLE);
             }
         }
+    
+        // ...
+    
+    }
     ```
 
 1. Handle exceptions:
@@ -136,11 +140,13 @@ users_" (**301**) and you don't want users to see it's real message.
         // ...
         
         $billing_service->checkWallet();
-    } catch (CustomizableException $e) {
-        $error_message = $e->getMessageFe(); // show only the messages a user is allowed to see
-        // NOT_ENOUGH_MONEY >> 'Not enough money (you need to add $3.05)'
-        // FORBIDDEN_UNRELIABLE >> 'error 301'
-    } finally {
+    } catch (Throwable $e) {
+        if ($e instanceof CustomizableException) {
+            $this->showMessage($e->getMessageFe()); // show only the messages a user is allowed to see
+            // NOT_ENOUGH_MONEY >> 'Not enough money (you need to add $3.05)'
+            // FORBIDDEN_UNRELIABLE >> 'error 301'
+        }
+    
         error_log($e->getMessage()); // or $e->__toString(); log real messages for yourself
         // NOT_ENOUGH_MONEY >> 'Not enough money (you need to add $3.05)'
         // FORBIDDEN_UNRELIABLE >> 'The operation is forbidden for unreliable users'
@@ -188,9 +194,11 @@ try {
     // ...
     
     $billing_service->checkWallet();
-} catch (CustomizableException $e) {
-    $error_message = $e->getMessageFe(); // >> 'Please verify your email first'
-} finally {
+} catch (Throwable $e) {
+    if ($e instanceof CustomizableException) {
+        $this->showMessage($e->getMessageFe()); // >> 'Please verify your email first'
+    }
+
     error_log($e->getMessage()); // or $e->__toString(); >> 'The operation is forbidden for unreliable users'
 }
 ```
@@ -208,16 +216,20 @@ circumstances:
 
 ```php
 // enabling profiles "pro" edition...
+try {
+    // ...
 } catch (CustomizableException $e) {
     $e->setContext('Upgrading your profile');
-    $error_message = $e->getMessageFe(); // >> 'Upgrading your profile: Not enough money (you need to add $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Upgrading your profile: Not enough money (you need to add $3.05)'
 }
 
 // buying profile skins...
+try {
+    // ...
 } catch (CustomizableException $e) {
     // $skin_name = 'CoolLook';
     $e->setContext(srpintf('"%s" skin purchasing', $skin_name));
-    $error_message = $e->getMessageFe(); // >> '"CoolLook" skin purchasing: Not enough money (you need to add $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> '"CoolLook" skin purchasing: Not enough money (you need to add $3.05)'
 }
 ```
 
@@ -243,10 +255,12 @@ class UserException extends CustomizableException
 }
 
 // buying anything...
+try {
+    // ...
 } catch (CustomizableException $e) {
-    $error_message = $e->getMessageFe(); // >> 'Unable to purchase a service: Not enough money (you need to add $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Unable to purchase a service: Not enough money (you need to add $3.05)'
     $e->setContext('Upgrading your profile');
-    $error_message = $e->getMessageFe(); // >> 'Upgrading your profile: Not enough money (you need to add $3.05)'
+    $this->showMessage($e->getMessageFe()); // >> 'Upgrading your profile: Not enough money (you need to add $3.05)'
 }
 ```
 
@@ -255,7 +269,7 @@ class UserException extends CustomizableException
 The repository contains an example script with a few classes and exceptions properties configured for a quick review
 of the supported properties. Just launch it in a CLI:
 
-```php
+```
 php examples/customizable.php
 ```
 

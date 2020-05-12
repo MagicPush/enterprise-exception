@@ -2,6 +2,13 @@
 
 This history log references the repository releases which respect [semantic versioning](https://semver.org/).
 
+## 3.0.1 (2020-05-12)
+
+### Improvements
+
+- Composer PHP requirement now accepts versions >=7.0.0 <8.0.0.
+- HOWTO guide **CustomizableException** examples little improvements.
+
 ## 3.0.0 (2019-02-05)
 
 ### Improvements
